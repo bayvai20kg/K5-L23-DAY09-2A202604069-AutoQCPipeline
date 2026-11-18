@@ -1,0 +1,18 @@
+{
+  "verdict": {
+    "decision": "Hold",
+    "n_errors": 0,
+    "n_warn_images": 44,
+    "n_images": 203,
+    "warn_ratio": 0.2167,
+    "reasons": [
+      "Tỉ lệ ảnh có cảnh báo 21.67% >= ngưỡng giữ lại 10.00% (44/203 ảnh). Cần người thẩm định thêm."
+    ]
+  },
+  "reviewed": 80,
+  "budget": 80,
+  "seconds": 6.7,
+  "exported": "C:\\Users\\GIA KHANG\\Downloads\\vin_ai_in_action\\K5-L23-DAY09-2A202604069-AutoQCPipeline\\submission\\export\\clean_v1",
+  "config_sha1": "c00b49bbcdbe078463ba23be5c8a5c95284ebf4c",
+  "review_sim_sha1": "7988ca22827f780a7043a2300490e679a1697154"
+}
