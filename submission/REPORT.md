@@ -74,7 +74,24 @@ python -m pipeline.run --budget 0 --reports work/rep_nb --export-dir work/exp_nb
 
 ## 5. Train: raw vs clean
 
-Chưa chạy (thiết bị cá nhân chạy kiểm thử cục bộ không có GPU, phần huấn luyện Colab là tùy chọn được thực hiện theo [docs/COLAB.md](docs/COLAB.md)).
+Thực nghiệm huấn luyện so sánh trên cùng mô hình khởi tạo (`yolo26n.pt`), cùng siêu tham số (20 epochs, batch 16, imgsz 640), 2 seed ngẫu nhiên (seed 0, 1), cùng tập validation (`data/gold_val`, 40 ảnh) và đánh giá trên cùng tập test chuẩn (`data/test`, 100 ảnh nhãn người).
+
+Kết quả tổng hợp từ `submission/results/comparison.md`:
+
+| biến thể | #ảnh train | số seed | map50 (TB ± độ lệch) | map50_95 (TB ± độ lệch) | precision (TB ± độ lệch) | recall (TB ± độ lệch) |
+|---|---|---|---|---|---|---|
+| `raw` | 224 | 2 | 0.712 ± 0.014 | 0.507 ± 0.021 | 0.773 ± 0.014 | 0.619 ± 0.009 |
+| `clean` | 203 | 2 | 0.691 ± 0.023 | 0.480 ± 0.003 | 0.726 ± 0.050 | 0.603 ± 0.011 |
+
+Chênh lệch $\Delta \text{mAP50} (\text{clean} − \text{raw}) = \mathbf{-0.021}$.
+
+### Phân tích và kết luận trung thực:
+- **So sánh với độ nhiễu giữa các seed**: Độ lệch chuẩn giữa các seed của `clean` là $\pm 0.023$ và của `raw` là $\pm 0.014$. Mức chênh lệch $-0.021$ hoàn toàn **nằm trong khoảng nhiễu thống kê** của thí nghiệm ($|\Delta| < \text{std}_{\text{clean}}$). Với tập test chỉ gồm 100 ảnh và chỉ thử nghiệm 2 seed, ta kết luận trung thực rằng **chưa có cơ sở thống kê để khẳng định mô hình nào vượt trội hơn**.
+- **Ba giả thuyết giải thích vì sao `raw` có điểm nhỉnh hơn nhẹ**:
+  1. *Rò rỉ dữ liệu (Data Leakage Inflation) ở `raw`*: Pipeline đã bắt được 5 ảnh trong `raw` trùng lặp hoàn toàn với tập test (`LEAK_TEST`: `img_0049`, `img_0101`, `img_0167`, `img_0174`, `img_0221`). Mô hình huấn luyện trên `raw` đã ghi nhớ sẵn 5% ảnh của bài thi, dẫn tới điểm số của `raw` bị thổi phồng giả tạo. `clean` loại bỏ 5 ảnh này nên điểm số phản ánh năng lực tổng quát hóa thực tế hơn. *Cách kiểm*: Loại bỏ 5 ảnh rò rỉ khỏi tập test và đo lại mAP.
+  2. *Chênh lệch dung lượng dữ liệu (~10%)*: `raw` có 224 ảnh còn `clean` có 203 ảnh (giảm 21 ảnh do loại bỏ ảnh hỏng, trùng, rò rỉ). Trong bài toán dữ liệu nhỏ, việc giảm bớt 9.4% số lượng ảnh có thể làm giảm nhẹ khả năng học đặc trưng của mạng nơ-ron. *Cách kiểm*: Bổ sung 21 ảnh sạch mới cùng phân bố vào `clean`.
+  3. *Ngân sách người duyệt bị giới hạn (80 ảnh)*: Hàng đợi duyệt có 130 ảnh nhưng người chỉ xem được 80 ảnh, còn 44 ảnh mang cảnh báo chưa được xử lý. Các box bị xóa tự động (`drop_line`) chưa được người vẽ bù có thể làm giảm số lượng box huấn luyện ở một số trường hợp khó. *Cách kiểm*: Mở rộng ngân sách duyệt lên 130 ảnh để giải quyết toàn bộ cảnh báo còn lại.
+
 
 ---
 
